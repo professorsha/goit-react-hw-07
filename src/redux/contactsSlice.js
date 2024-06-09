@@ -5,7 +5,7 @@ import {
   fetchContacts,
   filteredContacts,
 } from "./contactsOps";
-import { selectContacts, selectFilter } from "../redux/actions";
+import { selectContacts, selectFilter } from "../redux/selectors";
 
 export const handlePending = (state) => {
   state.isLoading = true;
