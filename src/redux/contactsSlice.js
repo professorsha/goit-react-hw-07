@@ -1,44 +1,60 @@
-// Слайс контактів
+import { createSelector, createSlice } from "@reduxjs/toolkit";
+import {
+  addContact,
+  deleteContact,
+  fetchContacts,
+  filteredContacts,
+} from "./contactsOps";
+import { selectContacts, selectFilter } from "../redux/actions";
 
-// У файлі contactsSlice.js оголоси слайс контактів, використовуючи функцію createSlice().
+export const handlePending = (state) => {
+  state.isLoading = true;
+};
 
-// Екшени слайса для використання в dispatch:
+export const handleRejected = (state, action) => {
+  state.isLoading = false;
+  state.error = action.payload;
+};
 
-// addContact - додавання нового контакту до властивості items
-// deleteContact - видалення контакту за id з властивості items
-
-
-// Оголоси функції-селектори для використання в useSelector:
-
-// selectContacts - повертає список контактів з властивості items.
-
-
-// З файла слайса експортуй редюсер, а також його екшени і селектори.
-import { createSlice } from "@reduxjs/toolkit";
-
-const contactSlice = createSlice({
+const contactsSlice = createSlice({
   name: "contacts",
   initialState: {
-    items: [
-      { id: "id-1", name: "Rosie Simpson", number: "459-12-56" },
-      { id: "id-2", name: "Hermione Kline", number: "443-89-12" },
-      { id: "id-3", name: "Eden Clements", number: "645-17-79" },
-      { id: "id-4", name: "Annie Copeland", number: "227-91-26" },
-    ],
+    items: [],
+    isLoading: false,
+    error: null,
   },
-  reducers: {
-    addContact: (state, action) => ({
-      ...state,
-      items: [...state.items, action.payload],
-    }),
-    deleteContact: (state, action) => {
-      return {
-        ...state,
-        items: state.items.filter((contact) => contact.id !== action.payload),
-      };
-    },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchContacts.rejected, handleRejected)
+      .addCase(fetchContacts.pending, handlePending)
+      .addCase(fetchContacts.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.error = null;
+        state.items = action.payload;
+      })
+      .addCase(addContact.rejected, handleRejected)
+      .addCase(addContact.pending, handlePending)
+      .addCase(addContact.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.error = null;
+        state.items.push(action.payload);
+      })
+      .addCase(deleteContact.rejected, handleRejected)
+      .addCase(deleteContact.pending, handlePending)
+      .addCase(deleteContact.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.error = null;
+        const index = state.items.findIndex(
+          (task) => task.id === action.payload.id
+        );
+        state.items.splice(index, 1);
+      });
   },
 });
-export const { addContact, deleteContact } = contactSlice.actions;
 
-export default contactSlice.reducer;
+export const contactsReducer = contactsSlice.reducer;
+
+export const selectFilteredContacts = createSelector(
+  [selectContacts, selectFilter],
+  (contacts, filter) => filteredContacts(contacts, filter)
+);
